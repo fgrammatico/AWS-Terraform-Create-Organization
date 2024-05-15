@@ -1,52 +1,17 @@
 provider "aws" {
-  region = "us-east-1"
+    region = "us-east-1"
 }
 
-provider "aws" {
-  assume_role {
-    role_arn = "arn:aws:iam::${aws_organizations_account.users.id}:role/Admin"
-  }
-
-  alias  = "users"
-  region = "us-east-1"
+terraform {
+    backend "s3" {
+        bucket = "harkom-terraform-state"
+        key    = "terraform.tfstate"
+        region = "us-east-1"
+        dynamodb_table = "harkom-terraform-state-lock"
+    }
 }
 
-provider "aws" {
-  assume_role {
-    role_arn = "arn:aws:iam::${aws_organizations_account.staging.id}:role/Admin"
-  }
-
-  alias  = "staging"
-  region = "us-east-1"
+resource "aws_organizations_organization" "harkom" {
+    aws_service_access_principals = ["config-multiaccountsetup.amazonaws.com"]
+    feature_set                   = "ALL"
 }
-
-provider "aws" {
-  assume_role {
-    role_arn = "arn:aws:iam::${aws_organizations_account.production.id}:role/Admin"
-  }
-
-  alias  = "production"
-  region = "us-east-1"
-}
-
-resource "aws_organizations_organization" "organization" {
-}
-
-resource "aws_organizations_account" "users" {
-  name      = local.account_name["users"]
-  email     = local.account_owner_email["users"]
-  role_name = "Admin"
-}
-
-resource "aws_organizations_account" "staging" {
-  name      = local.account_name["staging"]
-  email     = local.account_owner_email["staging"]
-  role_name = "Admin"
-}
-
-resource "aws_organizations_account" "production" {
-  name      = local.account_name["production"]
-  email     = local.account_owner_email["production"]
-  role_name = "Admin"
-}
-
